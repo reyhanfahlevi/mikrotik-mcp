@@ -1,124 +1,118 @@
 # mikrotik-mcp
 
-Model Context Protocol (MCP) Server **Read-Only** untuk **MikroTik RouterOS v7.x** (didukung v7.21+) via REST API.
+<div align="center">
 
-Server ini dirancang khusus untuk keperluan **monitoring, observabilitas, inspeksi konfigurasi, dan troubleshooting jaringan** secara aman oleh AI assistant (Claude Desktop, Cursor, Antigravity, OpenCode, dll.) tanpa risiko mengubah konfigurasi router, merusak state, atau melakukan tindakan berbahaya (100% Read-Only, hanya metode HTTP GET).
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Node.js](https://img.shields.io/badge/Node.js-%3E%3D20-339933?logo=node.js&logoColor=white)](https://nodejs.org/)
+[![RouterOS](https://img.shields.io/badge/RouterOS-v7.x%20(v7.21%2B)-004d80?logo=mikrotik&logoColor=white)](https://mikrotik.com/)
+[![MCP](https://img.shields.io/badge/Protocol-Model%20Context%20Protocol-8A2BE2)](https://modelcontextprotocol.io/)
+[![Security](https://img.shields.io/badge/Security-Strictly%20Read--Only-green.svg)](#-zero-mutation-security-guarantee)
+[![Docker](https://img.shields.io/badge/Docker-Ready-2496ED?logo=docker&logoColor=white)](https://www.docker.com/)
+
+**Secure, Strictly Read-Only Model Context Protocol (MCP) Server for MikroTik RouterOS v7 REST API.**
+
+[Fitur](#-fitur--tools) • [Persyaratan](#-persyaratan-di-sisi-mikrotik) • [Konfigurasi](#-konfigurasi-environment) • [Instalasi & Integrasi](#-instalasi--integrasi-klien-mcp) • [Docker](#-menjalankan-dengan-docker) • [Keamanan](#-zero-mutation-security-guarantee)
+
+</div>
 
 ---
 
-## ⚡ Fitur / Tools Read-Only yang Disediakan
+## 📌 Ringkasan
 
-| Tool Name | Deskripsi |
-| :--- | :--- |
-| `mikrotik_get_system_resource` | Cek CPU load, free memory, total memory, uptime, RouterOS version. |
-| `mikrotik_get_system_routerboard` | Detail hardware RouterBOARD (model, serial number, firmware version). |
-| `mikrotik_get_system_identity` | Cek hostname / identity router. |
-| `mikrotik_list_interfaces` | List semua network interface beserta status (running/disabled), MAC, type, dan traffic stats. |
-| `mikrotik_get_interface_details` | Detail lengkap satu interface berdasarkan nama atau ID. |
-| `mikrotik_get_ip_addresses` | List alamat IP yang terpasang di interface. |
-| `mikrotik_get_ip_routes` | Cek routing table (aktif/dinamis/statis). |
-| `mikrotik_get_arp_table` | Inspect ARP table (IP to MAC mapping). |
-| `mikrotik_get_dhcp_leases` | List client connected di DHCP Server (IP, MAC, Hostname, status, expire). |
-| `mikrotik_get_firewall_filter_rules` | List firewall filter rules beserta hit counters (bytes & packets). |
-| `mikrotik_get_firewall_nat_rules` | List firewall NAT rules. |
-| `mikrotik_get_system_logs` | Tarik system logs terbaru dengan filter topik (system, firewall, error, dll). |
+`mikrotik-mcp` adalah server [Model Context Protocol (MCP)](https://modelcontextprotocol.io/) yang menghubungkan AI Assistant (seperti **Claude Desktop**, **Cursor**, **Antigravity**, **Cline**, atau agent berbasis MCP lainnya) dengan router **MikroTik RouterOS v7** melalui antarmuka REST API resmi.
+
+Server ini didesain khusus untuk keperluan **observabilitas jaringan, monitoring performa, troubleshooting, dan inspeksi konfigurasi** dengan filosofi **keamanan tanpa risiko (zero-mutation)**.
+
+### 🛡️ Zero-Mutation Security Guarantee
+1. **100% Read-Only:** Seluruh tool yang disediakan hanya melakukan pembacaan data (metode HTTP `GET`).
+2. **Hardened HTTP Client:** Client internal dikunci di level kode sehingga tidak memiliki method `POST`, `PUT`, `PATCH`, atau `DELETE`. Panggilan mutasi secara teknis tidak mungkin dieksekusi.
+3. **No Arbitrary Execution:** Tidak ada fitur untuk menjalankan arbitrary terminal script, remote command, atau custom API call bebas.
+4. **Minimal Privileges:** Cukup gunakan akun MikroTik dengan izin `read` dan `rest-api`. Tidak memerlukan izin `write`, `policy`, `password`, atau `sensitive`.
+
+---
+
+## ⚡ Fitur & Tools
+
+Semua tool mengembalikan data terstruktur dalam format JSON yang mudah dipahami oleh LLM:
+
+| Tool Name | Kategori | Parameter | Deskripsi |
+| :--- | :--- | :--- | :--- |
+| `mikrotik_get_system_resource` | **System** | `-` | Mengambil data resource router: CPU load, free/total memory, uptime, board name, dan versi RouterOS. |
+| `mikrotik_get_system_routerboard` | **System** | `-` | Mengambil detail hardware RouterBOARD: model, serial number, firmware saat ini, dan factory firmware. |
+| `mikrotik_get_system_identity` | **System** | `-` | Mengambil nama host / identitas router. |
+| `mikrotik_list_interfaces` | **Interfaces** | `type` *(opsional)* | Menampilkan seluruh interface jaringan beserta status (running/disabled), MAC address, MTU, dan statistik traffic. |
+| `mikrotik_get_interface_details` | **Interfaces** | `nameOrId` *(wajib)* | Mengambil detail konfigurasi lengkap dari suatu interface berdasarkan nama (contoh: `ether1`) atau ID (`*1`). |
+| `mikrotik_get_ip_addresses` | **IP & Routing** | `interfaceName` *(opsional)* | Menampilkan daftar alamat IP yang terpasang pada interface router. |
+| `mikrotik_get_ip_routes` | **IP & Routing** | `activeOnly` *(opsional)* | Menampilkan routing table (rute dinamis, terhubung langsung, maupun statis). |
+| `mikrotik_get_arp_table` | **IP & Routing** | `interfaceName`, `ipAddress` *(opsional)* | Menginspeksi tabel ARP (pemetaan alamat IP ke MAC address). |
+| `mikrotik_get_dhcp_leases` | **DHCP** | `hostname`, `status` *(opsional)* | Menampilkan daftar client yang terhubung ke DHCP Server, status binding, host-name, dan waktu kedaluwarsa lease. |
+| `mikrotik_get_firewall_filter_rules` | **Firewall** | `chain` *(opsional)* | Menampilkan aturan firewall filter beserta hit counter (packet & byte counters) dan deskripsi komentarnya. |
+| `mikrotik_get_firewall_nat_rules` | **Firewall** | `chain` *(opsional)* | Menampilkan aturan firewall NAT (srcnat, dstnat, masquerade, port forwarding). |
+| `mikrotik_get_system_logs` | **Logs** | `limit`, `topic` *(opsional)* | Menarik log aktivitas sistem terbaru dengan filter topik (contoh: `error`, `firewall`, `warning`, `system`). |
 
 ---
 
 ## 🚀 Persyaratan di Sisi MikroTik
 
-Pastikan service `www-ssl` (atau `www`) aktif di RouterOS v7:
+### 1. Aktifkan Service REST API
+Pastikan service `www-ssl` (HTTPS - port 443) atau `www` (HTTP - port 80) aktif di RouterOS v7:
 
 ```routeros
 # Cek status service
 /ip service print
 
-# Pastikan www-ssl aktif (port 443) atau www (port 80)
+# Aktifkan www-ssl (direkomendasikan)
 /ip service enable www-ssl
 ```
 
-Pastikan user MikroTik memiliki privilege **`read`** dan **`api`** (atau **`rest-api`** di RouterOS v7). Tidak memerlukan privilege `write`.
+### 2. Buat User Khusus Read-Only (Rekomendasi Best Practice)
+Buat group dan user khusus dengan hak akses minimal:
 
----
+```routeros
+# 1. Buat grup dengan hanya privilege 'read' dan 'rest-api' (atau 'api')
+/user group add name=mcp-readonly policy=read,api,web,rest-api
 
-## ⚙️ Konfigurasi Environment Variables
-
-| Variable | Default | Keterangan |
-| :--- | :--- | :--- |
-| `MIKROTIK_HOST` | `192.168.88.1` | IP address atau hostname router |
-| `MIKROTIK_PORT` | `443` (atau `80`) | Port REST API |
-| `MIKROTIK_USERNAME` | `admin` | Username login MikroTik |
-| `MIKROTIK_PASSWORD` | `""` (kosong) | Password login MikroTik |
-| `MIKROTIK_USE_SSL` | `true` | Gunakan HTTPS (`true`) atau HTTP biasa (`false`) |
-| `MIKROTIK_ALLOW_INSECURE_SSL` | `true` | Izinkan self-signed certificate SSL router |
-| `MIKROTIK_TIMEOUT` | `15000` | Timeout request dalam milidetik |
-
-Atau bisa juga menggunakan CLI flags:
-`--host 192.168.88.1 --user admin --pass secret --port 443 --insecure`
-
----
-
-## 🛠️ Cara Penggunaan
-
-### 1. Jalankan langsung dengan NPX (Setelah di-publish / Link local)
-
-```bash
-# Setup secara local:
-npm install
-npm run build
-npm link
-
-# Run via npx / binary:
-MIKROTIK_HOST=192.168.88.1 MIKROTIK_USERNAME=admin MIKROTIK_PASSWORD=secret npx mikrotik-mcp
-```
-
-### 2. Jalankan di dalam Docker (Direkomendasikan untuk Workload Isolation)
-
-Build image:
-```bash
-docker build -t mikrotik-mcp:latest .
-```
-
-Jalankan langsung dengan security hardening:
-```bash
-docker run -i --rm \
-  --read-only \
-  --cap-drop=ALL \
-  --security-opt=no-new-privileges:true \
-  -e MIKROTIK_HOST=192.168.88.1 \
-  -e MIKROTIK_USERNAME=admin \
-  -e MIKROTIK_PASSWORD=secret \
-  mikrotik-mcp:latest
-```
-
-Atau jika digabungkan dengan **Infisical CLI**:
-```bash
-infisical run --env=prod -- docker run -i --rm \
-  --read-only \
-  --cap-drop=ALL \
-  --security-opt=no-new-privileges:true \
-  -e MIKROTIK_HOST \
-  -e MIKROTIK_USERNAME \
-  -e MIKROTIK_PASSWORD \
-  mikrotik-mcp:latest
+# 2. Buat user untuk MCP server
+/user add name=mcp-agent group=mcp-readonly password="GantiPasswordKuatIni123!"
 ```
 
 ---
 
-### 3. Konfigurasi di MCP Client (Claude Desktop / Cursor / Antigravity)
+## ⚙️ Konfigurasi Environment
 
-Tambahkan konfigurasi berikut ke file konfigurasi MCP (misal: `claude_desktop_config.json`):
+Server dapat dikonfigurasi menggunakan Environment Variables atau file `.env`:
+
+| Variable | CLI Flag | Default | Keterangan |
+| :--- | :--- | :--- | :--- |
+| `MIKROTIK_HOST` | `--host` | `192.168.88.1` | IP address atau hostname router MikroTik |
+| `MIKROTIK_PORT` | `--port` | `443` *(jika SSL)* / `80` | Port REST API MikroTik |
+| `MIKROTIK_USERNAME` | `--user` / `-u` | `admin` | Username akun MikroTik |
+| `MIKROTIK_PASSWORD` | `--pass` / `-p` | `""` | Password akun MikroTik |
+| `MIKROTIK_USE_SSL` | `--ssl` / `--no-ssl` | `true` | Gunakan HTTPS (`true`) atau HTTP biasa (`false`) |
+| `MIKROTIK_ALLOW_INSECURE_SSL` | `--insecure` | `true` | Izinkan sertifikat SSL self-signed internal router |
+| `MIKROTIK_TIMEOUT` | `--timeout` | `15000` | Batas waktu request dalam milidetik (ms) |
+
+---
+
+## 🧩 Instalasi & Integrasi Klien MCP
+
+### 1. Claude Desktop
+Tambahkan konfigurasi berikut ke file konfigurasi Claude Desktop Anda:
+- **macOS:** `~/Library/Application Support/Claude/claude_desktop_config.json`
+- **Windows:** `%APPDATA%\Claude\claude_desktop_config.json`
+- **Linux:** `~/.config/Claude/claude_desktop_config.json`
 
 ```json
 {
   "mcpServers": {
     "mikrotik": {
       "command": "node",
-      "args": ["/home/personal/workspace/mikrotik-mcp/dist/index.js"],
+      "args": ["/path/to/mikrotik-mcp/dist/index.js"],
       "env": {
         "MIKROTIK_HOST": "192.168.88.1",
-        "MIKROTIK_USERNAME": "admin",
-        "MIKROTIK_PASSWORD": "password_kamu",
+        "MIKROTIK_PORT": "443",
+        "MIKROTIK_USERNAME": "mcp-agent",
+        "MIKROTIK_PASSWORD": "GantiPasswordKuatIni123!",
         "MIKROTIK_USE_SSL": "true",
         "MIKROTIK_ALLOW_INSECURE_SSL": "true"
       }
@@ -127,7 +121,9 @@ Tambahkan konfigurasi berikut ke file konfigurasi MCP (misal: `claude_desktop_co
 }
 ```
 
-Jika sudah publish ke npm:
+### 2. Cursor / Antigravity / OpenCode
+Tambahkan blok server pada file konfigurasi MCP klien:
+
 ```json
 {
   "mcpServers": {
@@ -136,8 +132,8 @@ Jika sudah publish ke npm:
       "args": ["-y", "mikrotik-mcp"],
       "env": {
         "MIKROTIK_HOST": "192.168.88.1",
-        "MIKROTIK_USERNAME": "admin",
-        "MIKROTIK_PASSWORD": "password_kamu"
+        "MIKROTIK_USERNAME": "mcp-agent",
+        "MIKROTIK_PASSWORD": "GantiPasswordKuatIni123!"
       }
     }
   }
@@ -146,20 +142,56 @@ Jika sudah publish ke npm:
 
 ---
 
-## 🧑‍💻 Development
+## 🐳 Menjalankan dengan Docker
 
+Image docker didesain menggunakan multi-stage build Alpine Linux yang sangat ringan, tanpa dependensi dev, dan dijalankan dengan user non-root (`node`).
+
+### Build Image
 ```bash
-# Install dependencies
-npm install
+docker build -t mikrotik-mcp:latest .
+```
 
-# Run TypeScript build
-npm run build
+### Jalankan Container dengan Hardening Keamanan Maksimal
+```bash
+docker run -i --rm \
+  --read-only \
+  --cap-drop=ALL \
+  --security-opt=no-new-privileges:true \
+  -e MIKROTIK_HOST="192.168.88.1" \
+  -e MIKROTIK_USERNAME="mcp-agent" \
+  -e MIKROTIK_PASSWORD="GantiPasswordKuatIni123!" \
+  mikrotik-mcp:latest
+```
 
-# Run dalam watch mode
-npm run dev
+### Menggunakan Docker Compose
+Salin file [`.env.example`](.env.example) menjadi `.env`, sesuaikan isinya, lalu jalankan:
+```bash
+docker compose run --rm mikrotik-mcp
 ```
 
 ---
 
-## 📄 License
-MIT
+## 💻 Pengembangan Lokal
+
+```bash
+# 1. Clone repository
+git clone https://github.com/reyhanfahlevi/mikrotik-mcp.git
+cd mikrotik-mcp
+
+# 2. Install dependencies
+npm install
+
+# 3. Jalankan development server (menggunakan tsx)
+npm run dev
+
+# 4. Build TypeScript ke JavaScript produksi
+npm run build
+```
+
+---
+
+## 📄 Lisensi & Kontributor
+
+- **Author:** [Reyhan Fahlevi](https://github.com/reyhanfahlevi)
+- **Repository:** [https://github.com/reyhanfahlevi/mikrotik-mcp](https://github.com/reyhanfahlevi/mikrotik-mcp)
+- **Lisensi:** [MIT License](LICENSE)

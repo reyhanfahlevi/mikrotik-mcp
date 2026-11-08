@@ -21,10 +21,25 @@
     "model-context-protocol",
     "mikrotik",
     "routeros",
-    "network"
+    "routeros-v7",
+    "network",
+    "networking",
+    "monitoring",
+    "observability"
   ],
-  "author": "",
+  "author": "Reyhan Fahlevi",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/reyhanfahlevi/mikrotik-mcp.git"
+  },
+  "bugs": {
+    "url": "https://github.com/reyhanfahlevi/mikrotik-mcp/issues"
+  },
+  "homepage": "https://github.com/reyhanfahlevi/mikrotik-mcp#readme",
+  "engines": {
+    "node": ">=20"
+  },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.6.1",
     "undici": "^8.12.4",
