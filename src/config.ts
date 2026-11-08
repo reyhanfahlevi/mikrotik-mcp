@@ -1,6 +1,15 @@
 import { MikroTikConfig } from "./types.js";
 
 export function loadConfig(): MikroTikConfig {
+  // Try loading .env file if it exists (Node 20+)
+  try {
+    if (typeof (process as any).loadEnvFile === "function") {
+      (process as any).loadEnvFile();
+    }
+  } catch {
+    // Ignore if .env doesn't exist
+  }
+
   const args = process.argv.slice(2);
   const getArg = (names: string[]): string | undefined => {
     for (let i = 0; i < args.length; i++) {
