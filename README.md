@@ -81,7 +81,40 @@ npm link
 MIKROTIK_HOST=192.168.88.1 MIKROTIK_USERNAME=admin MIKROTIK_PASSWORD=secret npx mikrotik-mcp
 ```
 
-### 2. Konfigurasi di MCP Client (Claude Desktop / Cursor / Antigravity)
+### 2. Jalankan di dalam Docker (Direkomendasikan untuk Workload Isolation)
+
+Build image:
+```bash
+docker build -t mikrotik-mcp:latest .
+```
+
+Jalankan langsung dengan security hardening:
+```bash
+docker run -i --rm \
+  --read-only \
+  --cap-drop=ALL \
+  --security-opt=no-new-privileges:true \
+  -e MIKROTIK_HOST=192.168.88.1 \
+  -e MIKROTIK_USERNAME=admin \
+  -e MIKROTIK_PASSWORD=secret \
+  mikrotik-mcp:latest
+```
+
+Atau jika digabungkan dengan **Infisical CLI**:
+```bash
+infisical run --env=prod -- docker run -i --rm \
+  --read-only \
+  --cap-drop=ALL \
+  --security-opt=no-new-privileges:true \
+  -e MIKROTIK_HOST \
+  -e MIKROTIK_USERNAME \
+  -e MIKROTIK_PASSWORD \
+  mikrotik-mcp:latest
+```
+
+---
+
+### 3. Konfigurasi di MCP Client (Claude Desktop / Cursor / Antigravity)
 
 Tambahkan konfigurasi berikut ke file konfigurasi MCP (misal: `claude_desktop_config.json`):
 

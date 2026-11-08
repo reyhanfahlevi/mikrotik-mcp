@@ -1,0 +1,29 @@
+services:
+  mikrotik-mcp:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: mikrotik-mcp:latest
+    container_name: mikrotik-mcp
+    restart: unless-stopped
+    stdin_open: true  # Required for MCP stdio communication
+    tty: false
+
+    # --- Security Hardening ---
+    read_only: true
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    user: "1000:1000" # non-root user (node)
+    tmpfs:
+      - /tmp:size=10M,mode=1777,noexec
+
+    # --- Configuration ---
+    environment:
+      - MIKROTIK_HOST=${MIKROTIK_HOST:-192.168.88.1}
+      - MIKROTIK_PORT=${MIKROTIK_PORT:-443}
+      - MIKROTIK_USERNAME=${MIKROTIK_USERNAME:-admin}
+      - MIKROTIK_PASSWORD=${MIKROTIK_PASSWORD}
+      - MIKROTIK_USE_SSL=${MIKROTIK_USE_SSL:-true}
+      - MIKROTIK_ALLOW_INSECURE_SSL=${MIKROTIK_ALLOW_INSECURE_SSL:-true}
