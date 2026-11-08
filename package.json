@@ -1,0 +1,39 @@
+{
+  "name": "mikrotik-mcp",
+  "version": "0.1.0",
+  "description": "MikroTik RouterOS v7 Model Context Protocol (MCP) Server",
+  "type": "module",
+  "main": "./dist/index.js",
+  "bin": {
+    "mikrotik-mcp": "./dist/index.js"
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "rimraf dist && tsc",
+    "prepublishOnly": "npm run build",
+    "start": "node dist/index.js",
+    "dev": "tsx src/index.ts"
+  },
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "mikrotik",
+    "routeros",
+    "network"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.6.1",
+    "undici": "^8.12.4",
+    "zod": "^3.24.2"
+  },
+  "devDependencies": {
+    "@types/node": "^22.13.10",
+    "rimraf": "^6.0.1",
+    "tsx": "^4.19.3",
+    "typescript": "^5.8.2"
+  }
+}
