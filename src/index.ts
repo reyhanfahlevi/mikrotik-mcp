@@ -9,9 +9,7 @@ import { registerInterfaceTools } from "./tools/interfaces.js";
 import { registerIpTools } from "./tools/ip.js";
 import { registerDhcpTools } from "./tools/dhcp.js";
 import { registerFirewallTools } from "./tools/firewall.js";
-import { registerDiagnosticsTools } from "./tools/diagnostics.js";
 import { registerLogTools } from "./tools/logs.js";
-import { registerRawTools } from "./tools/raw.js";
 
 async function main() {
   const config = loadConfig();
@@ -22,15 +20,13 @@ async function main() {
     version: "0.1.0",
   });
 
-  // Register all tool modules
+  // Register read-only tool modules
   registerSystemTools(server, client);
   registerInterfaceTools(server, client);
   registerIpTools(server, client);
   registerDhcpTools(server, client);
   registerFirewallTools(server, client);
-  registerDiagnosticsTools(server, client);
   registerLogTools(server, client);
-  registerRawTools(server, client);
 
   // Stdio transport for MCP
   const transport = new StdioServerTransport();

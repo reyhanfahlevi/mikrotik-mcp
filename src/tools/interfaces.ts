@@ -63,35 +63,4 @@ export function registerInterfaceTools(server: McpServer, client: MikroTikClient
       }
     }
   );
-
-  server.tool(
-    "mikrotik_set_interface_state",
-    "Enable or disable a network interface.",
-    {
-      nameOrId: z.string().describe("The interface name or ID"),
-      disabled: z.boolean().describe("True to disable the interface, false to enable"),
-    },
-    async ({ nameOrId, disabled }) => {
-      try {
-        const res = await client.patch(`/interface/${encodeURIComponent(nameOrId)}`, {
-          disabled: disabled ? "true" : "false",
-        });
-        return {
-          content: [
-            {
-              type: "text",
-              text: `Interface '${nameOrId}' state successfully set to disabled=${disabled}. Response: ${JSON.stringify(
-                res
-              )}`,
-            },
-          ],
-        };
-      } catch (error: any) {
-        return {
-          isError: true,
-          content: [{ type: "text", text: `Error: ${error.message}` }],
-        };
-      }
-    }
-  );
 }

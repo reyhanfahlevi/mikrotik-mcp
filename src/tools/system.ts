@@ -74,43 +74,4 @@ export function registerSystemTools(server: McpServer, client: MikroTikClient) {
       }
     }
   );
-
-  server.tool(
-    "mikrotik_reboot_system",
-    "Reboot the MikroTik router. Requires confirmation flag.",
-    {
-      confirm: z
-        .boolean()
-        .describe("Explicit confirmation to reboot the router. Must be true."),
-    },
-    async ({ confirm }) => {
-      if (!confirm) {
-        return {
-          isError: true,
-          content: [
-            {
-              type: "text",
-              text: "Reboot aborted: 'confirm' must be explicitly set to true.",
-            },
-          ],
-        };
-      }
-      try {
-        await client.post("/system/reboot", {});
-        return {
-          content: [
-            {
-              type: "text",
-              text: "Reboot command successfully sent to MikroTik router.",
-            },
-          ],
-        };
-      } catch (error: any) {
-        return {
-          isError: true,
-          content: [{ type: "text", text: `Error: ${error.message}` }],
-        };
-      }
-    }
-  );
 }

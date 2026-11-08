@@ -25,9 +25,7 @@ export class MikroTikClient {
   }
 
   public async request<T = any>(
-    method: "GET" | "POST" | "PUT" | "PATCH" | "DELETE",
     path: string,
-    body?: any,
     params?: Record<string, string | number | boolean>
   ): Promise<T> {
     // Clean up path
@@ -52,20 +50,13 @@ export class MikroTikClient {
       Accept: "application/json",
     };
 
-    let bodyStr: string | undefined;
-    if (body !== undefined && body !== null) {
-      headers["Content-Type"] = "application/json";
-      bodyStr = JSON.stringify(body);
-    }
-
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), this.config.timeoutMs);
 
     try {
       const response = await fetch(url.toString(), {
-        method,
+        method: "GET",
         headers,
-        body: bodyStr,
         signal: controller.signal,
         // @ts-ignore undici dispatcher
         dispatcher: this.agent,
@@ -94,7 +85,7 @@ export class MikroTikClient {
     } catch (err: any) {
       if (err.name === "AbortError") {
         throw new Error(
-          `MikroTik API Request timed out after ${this.config.timeoutMs}ms for ${method} ${url.pathname}`
+          `MikroTik API Request timed out after ${this.config.timeoutMs}ms for GET ${url.pathname}`
         );
       }
       throw err;
@@ -104,22 +95,6 @@ export class MikroTikClient {
   }
 
   public get<T = any>(path: string, params?: Record<string, string | number | boolean>): Promise<T> {
-    return this.request<T>("GET", path, undefined, params);
-  }
-
-  public post<T = any>(path: string, body?: any): Promise<T> {
-    return this.request<T>("POST", path, body);
-  }
-
-  public put<T = any>(path: string, body?: any): Promise<T> {
-    return this.request<T>("PUT", path, body);
-  }
-
-  public patch<T = any>(path: string, body?: any): Promise<T> {
-    return this.request<T>("PATCH", path, body);
-  }
-
-  public delete<T = any>(path: string): Promise<T> {
-    return this.request<T>("DELETE", path);
+    return this.request<T>(path, params);
   }
 }
