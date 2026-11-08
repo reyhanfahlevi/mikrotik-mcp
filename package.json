@@ -1,11 +1,14 @@
 {
-  "name": "mikrotik-mcp",
+  "name": "@reyhanfahlevi/mikrotik-mcp",
   "version": "0.1.0",
   "description": "MikroTik RouterOS v7 Model Context Protocol (MCP) Server",
   "type": "module",
   "main": "./dist/index.js",
   "bin": {
     "mikrotik-mcp": "./dist/index.js"
+  },
+  "publishConfig": {
+    "access": "public"
   },
   "files": [
     "dist"

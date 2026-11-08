@@ -129,7 +129,7 @@ Add the server block to your MCP client configuration:
   "mcpServers": {
     "mikrotik": {
       "command": "npx",
-      "args": ["-y", "mikrotik-mcp"],
+      "args": ["-y", "@reyhanfahlevi/mikrotik-mcp"],
       "env": {
         "MIKROTIK_HOST": "192.168.88.1",
         "MIKROTIK_USERNAME": "mcp-agent",
@@ -139,6 +139,12 @@ Add the server block to your MCP client configuration:
   }
 }
 ```
+
+> **Note:** If running directly from a local clone before publishing to npm, you can point directly to the local folder:
+> ```json
+> "command": "npx",
+> "args": ["-y", "/absolute/path/to/mikrotik-mcp"]
+> ```
 
 ---
 
